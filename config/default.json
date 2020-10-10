@@ -1,0 +1,11 @@
+{
+  "host": "localhost",
+  "port": 8080,
+  "public": "../public/",
+  "paginate": {
+    "default": 10,
+    "max": 20
+  },
+  "nedb": "../data",
+  "mysql": "mysql://root:@localhost:3306/suoitien"
+}
