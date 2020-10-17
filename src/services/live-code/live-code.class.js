@@ -6,6 +6,9 @@ const { Service }  = require('feathers-nedb'); // TÊN { Service } này mặc đ
 const mModel = require('../../models/'+MODE+'.model');
 const Helper = require('../../hooks/ultil/helper') ;
 
+const myTime = require('../../hooks/ultil/myTime') ;
+
+
 const createRandTimeCode = require('../../hooks/ultil/createRandTimeCode') ;
 
 
@@ -17,6 +20,8 @@ class Controller extends Service{
         super(options);
 
         this.Model = options.Model;
+        this.app = options.app ; 
+        
 
         this._schema = {
           sn:'',
@@ -141,6 +146,11 @@ class Controller extends Service{
 
     }
 
+
+
+    /*
+    @URI : http://local:8080/live-code/getRunServerCmd
+    */
     async _getRunServerCmd(sn,params){
 
         return new Promise((resolve,reject)=>{
@@ -291,9 +301,41 @@ ID=10        CardBit=66        SiteCode=0        FormatName=Wiegand Format66    
 
     }
 
+    /*
+    @uri : /test
+    @method : GET 
+    */
     async _test(id,params){
 
-      return id;
+     
+
+      return new Promise((resolve, reject)=>{
+
+        const retData = {
+          sn:"test001"
+        }
+        const moRealtime = this.app.service('realtime').Model;
+        moRealtime.update({
+          _id:"yD1INnriFNvYoF0a"
+        },{
+          $set:{
+            ...retData,
+            updatedAt:myTime.unixTime(),
+          }
+        },{ multi:true },(err,numReplaced)=>{
+
+          console.log("UPDATE DATABASE REALTIME SUCCESS", numReplaced);
+          resolve('success')
+         
+
+
+        });
+
+      });
+       
+
+      
+
     }
 
     /*
@@ -479,7 +521,7 @@ module.exports = function(app){
     const Model = mModel(app);
 
     const paginate = app.get('paginate');
-    return new Controller({Model,paginate});
+    return new Controller({app,Model,paginate});
 
 };
 

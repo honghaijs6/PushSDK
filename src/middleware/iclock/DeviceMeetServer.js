@@ -4,6 +4,8 @@
 
 const constants = require('./ultils/constants');
 const myTime = require('../../hooks/ultil/myTime') ;
+
+
 const createRandTimeCode = require('../../hooks/ultil/createRandTimeCode') ;
 
 const readline = require('readline');
@@ -244,10 +246,25 @@ class mDeviceMeetServer {
   /* SEND OUT SOCKET  */
   _emitRealtimeLog(json={}){
 
+
+    // UPDATE DATABASE REALTIME 
+    const moRealtime = this.app.service('realtime').Model;
+    moRealtime.update({
+      _id:"yD1INnriFNvYoF0a"
+    },{
+        $set:{
+          ...json,
+          updatedAt:myTime.unixTime(),
+        }
+    },{ multi:true },(err,numReplaced)=>{
+        
+      console.log("UPDATE DATABASE REALTIME SUCCESS", numReplaced);
+    
+    });  
+
+    
     // QUERY DEVICE
-
     const moDevice = this.app.service('devices');
-
     moDevice.Model.find({sn:json.sn}).limit(1).exec((err,docs)=>{
 
       if(docs.length >0){
@@ -256,13 +273,16 @@ class mDeviceMeetServer {
         let retData = Object.assign({
           name: data.name,
           gate_no:data.gate_no,
-          ip:data.options.IPAddress
+          ip:data.options.IPAddress  
         },json);
 
         this.app.service('realtime-logs').emit('logs', retData);
 
+        
       }
     });
+
+   
 
   }
 
@@ -567,6 +587,7 @@ class mDeviceMeetServer {
     // SEND THONG TIN QUA IQ SYSTEM 
     if(json.event === "27"){ // UNREGISTER PERSONEL
       
+      
       //this._pushOracle(sn,json);
       //this._openDevice(sn,json);
 
@@ -583,7 +604,7 @@ class mDeviceMeetServer {
 
     //const isWipedSuccess = parseInt(json.event);
     
-       
+         
     /*if(json.event==="0"){
       try{
 
@@ -758,6 +779,7 @@ class mDeviceMeetServer {
                 json.inoutstatus = this.inOut[json.inoutstatus] || "Unknow Status" ;
                 json.verifytype = this.verifyModes[json.verifytype];
                 json.sn = sn;
+                json.door = json.eventaddr;
                 
                 // SEND REALTIME SOCKET
                 this._emitRealtimeLog(json);

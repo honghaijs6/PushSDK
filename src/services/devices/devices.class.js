@@ -18,6 +18,7 @@ class Controller extends Service{
         super(options);
 
         this.Model = options.Model;
+        this.app = options.app; 
 
         this._schema = {
           cmd:'',
@@ -330,6 +331,45 @@ class Controller extends Service{
     }
 
 
+    _postopendoor(data,params){
+
+    
+      return new Promise((resolve, reject)=>{
+
+        try{
+          const moCommand = this.app.service('commands').Model ;
+
+          const { door, sn } = data ; 
+
+          const cmdOpen = "CONTROL DEVICE 010"+door+"0103" ;
+          
+          const postData = {
+            cmd:cmdOpen,
+            sn,
+            createdAt:myTime.unixTime()
+          }
+          moCommand.insert(postData,(err,docs)=>{
+
+            resolve(err ? 'error' : 'success')  ;
+            
+
+          });
+          
+
+        }catch(err){
+          console.log(err)
+        }
+
+        
+      })
+
+     
+      
+
+      
+    
+    
+    }
 
     /* METHOD POST
     route :/devices/SetTimeZone
@@ -507,7 +547,7 @@ module.exports = function(app){
     const Model = mModel(app);
 
     const paginate = app.get('paginate');
-    return new Controller({Model,paginate});
+    return new Controller({app,Model,paginate});
 
 };
 

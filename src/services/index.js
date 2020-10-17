@@ -28,6 +28,10 @@ const liveCode = require('./live-code/live-code.service.js');
 
 
 
+const realtime = require('./realtime/realtime.service.js');
+
+
+
 // eslint-disable-next-line no-unused-vars
 module.exports = function (app) {
   app.configure(commands);
@@ -43,4 +47,5 @@ module.exports = function (app) {
   app.configure(queryLogs);
   app.configure(renewTickets);
   app.configure(liveCode);
+  app.configure(realtime);
 };
