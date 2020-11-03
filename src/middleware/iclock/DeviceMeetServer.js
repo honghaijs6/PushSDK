@@ -11,26 +11,42 @@ const createRandTimeCode = require('../../hooks/ultil/createRandTimeCode') ;
 const readline = require('readline');
 const stream = require('stream');
 
+const axios = require('axios');
+const { resolve } = require('path');
+
 
 let COUNT = 1 ;
 
+// used for calling CATENA API 
+const REQUEST_API_CONFIG = {
+  RequestAction : "GetToken",
+  PartnerCode: "REN-ViKhang",
+  TenantCode: "REN-01",
+  UserName: "ViKhang",
+  Password: "LOdoIt2w2EY"
+}
+
+const DELAY_7DAYS =  7*(24*(1000*60*60)) ;
 
 class mDeviceMeetServer {
-
-
-
+  
 
   /* DATA */
 
   /* END DATA*/
 
 
+
+
   constructor(app){
 
+
+    this.token = '',
+
+    
+
     this.app = app ;
-
-
-
+    
     this.registrycodes = [];
 
     this._isRegiter  = false;
@@ -53,6 +69,96 @@ class mDeviceMeetServer {
 
     //this._initOracle();
 
+    
+
+    this._getTokenFromCatana(); 
+    // SET SCHEDULE GET TOKEN 2 DAYS 
+    this._scheduleToken();
+
+
+
+  }
+
+  _scheduleToken(){
+
+    console.log("CALL FROM OUTSIDE TIMEOUT");
+    setTimeout(()=>{
+
+      console.log("====CALL FROM INSIDE TIMEOUT==="); 
+      console.log(this.token) ; 
+
+
+      this._getTokenFromCatana().then((token)=>{
+        this._scheduleToken();
+      })
+      
+    },DELAY_7DAYS);
+  }
+  
+  _getTokenFromCatana(){
+
+    return new Promise((resolve)=>{
+
+      
+      const URL = 'http://172.29.139.62:81';
+      
+      axios.post(URL, REQUEST_API_CONFIG )
+      .then((response)=>{
+        console.log(response);
+
+        const { data } = response ; 
+        this.token = data.Token ; 
+
+
+      })
+      .catch(function (error) {
+        console.log(error);
+      });
+
+      /*setTimeout(()=>{
+        const myToken = 'asdasdasd-asdasdasd-token';
+        this.token = myToken;
+        resolve(myToken);
+      },1000);*/
+
+    });
+  }
+
+  _doVerifyCatena(sn, json={}){
+
+    return new Promise((resolve)=>{
+      
+      const URL = 'http://172.29.139.62:81';
+      const curDateTime = new Date();
+
+      axios.post(URL,{
+        RequestAction:"VerifyEmployeeMeal",
+        DeviceSerial: sn, // số serial thiết bị
+        DoorCode: json.door, // mã cổng / cửa
+        CardNumber: json.cardno,  // mã thẻ
+        VerifyDateTime: curDateTime.toISOString() // format ISO_8601
+
+      },{
+        headers: {
+          token: this.token,
+        }
+      })
+      .then((res)=>{
+
+        // ALLOW OPEN DOOR OR NOT ;  
+        const { isValid, message } = res ; 
+        if(message==='Verify Successfull'){
+          this._openDevice(sn, json) ; 
+        }
+        
+
+      })
+      .catch((err)=>{
+        console.log(err);
+      })
+      
+
+    });
   }
 
 
@@ -587,119 +693,16 @@ class mDeviceMeetServer {
     // SEND THONG TIN QUA IQ SYSTEM 
     if(json.event === "27"){ // UNREGISTER PERSONEL
       
+      // KIEM TRA API 
+
+
       
       //this._pushOracle(sn,json);
       //this._openDevice(sn,json);
-
-
-
+        
     }
 
-    // LAY KET QUA TRA VE 
-
-    // MO CUA HOAC DONG CUA
-
-    //this._openDevice(sn,json);
-
-
-    //const isWipedSuccess = parseInt(json.event);
-    
-         
-    /*if(json.event==="0"){
-      try{
-
-        const moLiveCode = this.app.service('live-code').Model;
-
-        moLiveCode.find({cardno:json.cardno},(err,docs)=>{
-
-
-          console.log(" MY CODE HERE ");
-          console.log(docs);
-          if(err===null){
-
-            if(docs.length > this._indexLiveCode){
-
-                const doc = docs[0];
-
-                if(doc.type === "qrcode"){
-                  //1 :  CREATE RE-NEW CODE
-                  const preCode = doc.gate_no + doc.type_no ; // MÃ CỔNG - LOẠI VÉ
-
-                  const newCode = createRandTimeCode(doc);
-
-                  //createRandTimeCode(doc).then((newCode)=>{
-
-                     // PUSH NEW CODE FOR MULTI DEVICES
-                     console.log("===NEW CODE CREATED : NORMAL ===");
-                     console.log(newCode);
-
-                     this._pushCodeToDevice(docs,newCode,sn) ;
-
-                     console.log("===HAVE PUSHED TO MULTI DEVICES NORMAL ");
-
-                     
-
-                     moLiveCode.update({
-                       cardno:doc.cardno
-                     },{
-                       $set:{
-                         cardno:newCode,
-                         updatedAt:myTime.unixTime(),
-                         //json: JSON.stringify({ cardno:newCode, sn:doc.sn})
-
-                       }
-                     },{ multi:true },(err,numReplaced)=>{
-
-
-                       if(numReplaced > 0){
-                         console.log("======: RENEW-CODE : NORMAL ====" + numReplaced);
-                        
-                         // 4 : INSERT TICKETS MYSQL DB AS LOGS FILE
-                        const moTicket = this.app.service('tickets') ;
-                        let newDoc = Object.assign(doc,{ sn: json.sn});
-                        newDoc.door = json.eventaddr.replace("Door ","") ;  
-                        
-                        moTicket.Model.create(newDoc) ;
-
-
-                        // 5: UPDATE LIVE-CODE MULTI RECORD
-                        console.log("==== UPDATE DATA MYSQL DONE  NORMAL ==== ");
-
-                      }
-
-                     })
-
-
-
-                  //}) ;
-
-                }else if(doc.type==='master'){
-                  
-                  console.log("====YOU WIPED MASTER CARD ==========");
-                  const moTicket = this.app.service('tickets') ;
-                  //let newDoc = Object.assign(doc,{});
-                  let newDoc = Object.assign(doc,{ sn: json.sn});
-                  newDoc.door = json.eventaddr.replace("Door ","") ;  
-                  newDoc.is_master = 1; 
-
-                  moTicket.Model.create(newDoc) ;
-
-
-                }
-
-            }
-
-
-          }else {
-            console.log("================= ERROR HERE === WIPED CARD ");
-          }
-
-        })
-      }catch(err){}
-    }else{
-      this._checkLocalData(sn,json);
-    }*/
-
+   
   }
 
   /* ON WIPED SUCCESS
@@ -718,10 +721,7 @@ class mDeviceMeetServer {
 
     const params = req.params;
     const query = req.query;
-
-
-
-
+    
     try{
 
       const pathValue = params.param;

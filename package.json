@@ -1,7 +1,7 @@
 {
-  "name": "backend_st",
-  "description": "backend for suoitien",
-  "version": "0.0.0",
+  "name": "pushsdk",
+  "description": "standard",
+  "version": "1.0.0",
   "homepage": "",
   "main": "src",
   "keywords": [
@@ -46,12 +46,13 @@
     "moment": "^2.24.0",
     "mysql2": "^1.6.1",
     "nedb": "^1.8.0",
+    "qckwinsvc": "^1.0.0",
     "sequelize": "^4.41.2",
     "serve-favicon": "^2.5.0",
     "winston": "^3.2.1"
   },
   "devDependencies": {
-    "axios": "^0.19.1",
+    "axios": "^0.19.2",
     "eslint": "^6.8.0",
     "mocha": "^6.2.2",
     "nodemon": "^1.19.4",
