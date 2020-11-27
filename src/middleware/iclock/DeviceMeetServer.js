@@ -71,9 +71,9 @@ class mDeviceMeetServer {
 
     
 
-    this._getTokenFromCatana(); 
+    //this._getTokenFromCatana(); 
     // SET SCHEDULE GET TOKEN 2 DAYS 
-    this._scheduleToken();
+    //this._scheduleToken();
 
 
 

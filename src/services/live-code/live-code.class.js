@@ -338,6 +338,74 @@ ID=10        CardBit=66        SiteCode=0        FormatName=Wiegand Format66    
 
     }
 
+    async _postassign(data, params){
+
+      return new Promise((resolve, reject)=>{
+
+        
+        try{
+
+          // find live code here 
+
+          // PUSH TO COMMAND
+
+          const { code, door } = data ; 
+
+          if( code && door){
+            const cmd = "CONTROL DEVICE 010"+door+"0101 + code="+code ;
+            const sn = 'no-serial';
+  
+            const moCommand = this.app.service("commands") ;
+  
+            const postData = {
+              sn,
+              cmd
+            };
+            moCommand.Model.insert(postData,(err,docs)=>{
+  
+              if(err===null){
+                resolve('success') ;
+              }else{
+                resolve(err);
+              }
+              
+  
+            });
+              
+          }else{
+
+            let err = 'passing wrong, or missing params! make sure that you pass an object with 2 attribute -->code, door';
+
+            Object.keys(data).some((item)=>{
+              
+              if(data[item]==undefined || data[item] ===''){
+                err= 'passing wrong params please check : -->'+item + 'can not be empty'
+                return false;
+              }
+
+            });
+            
+
+            resolve(err);
+
+          }
+          
+          
+                  
+
+
+        }catch(err){
+
+
+          resolve(err);
+
+        }
+        
+
+
+      })
+    }
+
     /*
     METHOD POST:
     */
